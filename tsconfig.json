@@ -1,27 +1,42 @@
 {
-    "compilerOptions": {
-        /* Base Options: */
-        "esModuleInterop": true,
-        "skipLibCheck": true,
-        "target": "es2022",
-        "resolveJsonModule": true,
-        "isolatedModules": true,
+  "compilerOptions": {
+    /* Base Options: */
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "target": "es2022",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
 
-        /* Strictness */
-        "strict": true,
-        "noUncheckedIndexedAccess": true,
-        "noImplicitAny": false,
+    /* Strictness */
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitAny": false,
 
-        /* Output Options */
-        "declaration": true,
-        "declarationMap": true,
-        "sourceMap": true,
-        "outDir": "./dist",
-        "lib": ["dom", "dom.iterable", "ES2022"],
-        "module": "NodeNext",
-        "moduleResolution": "NodeNext",
-        "rootDir": "./src"
-    },
-    "include": ["src/**/*.ts"],
-    "exclude": ["node_modules", "dist"]
+    /* Output Options */
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "outDir": "./dist",
+    "lib": ["dom", "dom.iterable", "ES2022"],
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "rootDir": "./src",
+    
+    /* NestJS Required Options */
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
+    "noFallthroughCasesInSwitch": true,
+    "removeComments": true,
+    "incremental": true,
+    
+    /* Additional Options */
+    "baseUrl": "./",
+    "paths": {
+      "*": ["node_modules/*", "src/*"]
+    }
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "dist"]
 }
