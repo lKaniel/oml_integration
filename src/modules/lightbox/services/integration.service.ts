@@ -98,6 +98,7 @@ export interface LightboxTVPlacement {
   budget: number;
   priority: number;
   creative_ids: number[];
+  spot_number: number;
 }
 
 /**
@@ -207,7 +208,7 @@ export class IntegrationService {
       );
 
       // 5. Бронювання спотів
-      const spots = await this.reserveSpots(blocksForPlacement[0]!);
+      const spots = await this.reserveSpots(blocksForPlacement[campaign.placements?.[0]?.spot_number || 0]!);
       this.logProgress("reserve_spots", 80, `Заброньовано 1 спотів в OML`);
 
       // 6. Фіналізація інтеграції
