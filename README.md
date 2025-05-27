@@ -34,11 +34,8 @@ pnpm install
 pnpm build
 ```
 
-## Запуск сервісу
-
-```bash
 # Режим розробки
-pnpm start:dev
+pnpm dev
 
 # Виробничий режим
 pnpm start:prod
@@ -165,14 +162,6 @@ node test-api.js
 1. Основна бізнес-логіка знаходиться в `src/modules/lightbox/services/integration.service.ts`
 2. API ендпоінти визначені в `src/modules/lightbox/integration.controller.ts`
 3. Після внесення змін зберіть та протестуйте додаток
-
-### Змінні оточення
-
-Для розгортання у виробничому середовищі рекомендується використовувати змінні оточення для конфіденційної інформації:
-
-- URL API OML
-- Облікові дані OML
-- Інші конфігураційні параметри
 
 ## Ліцензія
 

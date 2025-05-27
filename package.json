@@ -1,28 +1,13 @@
 {
   "name": "oml_integration",
   "version": "1.0.0",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "exports": {
-    ".": {
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
-    }
-  },
-  "files": [
-    "dist",
-    "LICENSE",
-    "README.md"
-  ],
+  "main": "src/index.js",
   "private": true,
   "scripts": {
     "build": "tsc",
     "format": "prettier --write \"src/**/*.ts\"",
     "start": "node dist/main.js",
-    "start:dev": "ts-node-dev --respawn --transpile-only src/main.ts",
-    "start:debug": "node --inspect-brk -r ts-node/register src/main.ts",
-    "start:prod": "node dist/main.js",
-    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix"
+    "dev": "nest start --watch"
   },
   "author": "Vitalii Shevchuk",
   "email": "vitshev120@gmail.com",
@@ -56,6 +41,7 @@
     "@nestjs/core": "^11.1.2",
     "@nestjs/platform-express": "^11.1.2",
     "class-transformer": "^0.5.1",
-    "class-validator": "^0.14.2"
+    "class-validator": "^0.14.2",
+    "dotenv": "^16.5.0"
   }
 }

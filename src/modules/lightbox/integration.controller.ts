@@ -13,8 +13,7 @@ import {
   IntegrationService, 
   IntegrationResult, 
   LightboxTVCampaign, 
-  LightboxTVCreative, 
-  IntegrationConfig 
+  LightboxTVCreative,
 } from './services/integration.service';
 
 /**
@@ -22,6 +21,8 @@ import {
  * 
  * Структура запиту для публікації рекламної кампанії
  * з LightboxTV до OML через API інтеграційного сервісу.
+ * 
+ * Конфігурація OML отримується зі змінних оточення.
  */
 export class CampaignPublishDto {
   /** Дані рекламної кампанії з LightboxTV */
@@ -29,9 +30,6 @@ export class CampaignPublishDto {
   
   /** Масив креативів (рекламних матеріалів) */
   creatives!: LightboxTVCreative[];
-  
-  /** Конфігурація інтеграції з OML */
-  config!: IntegrationConfig;
 }
 
 /**
@@ -40,7 +38,7 @@ export class CampaignPublishDto {
  * Надає ендпоінт для публікації рекламних кампаній 
  * з LightboxTV до системи Open Media Logic.
  */
-@Controller('lightbox')
+@Controller('integration')
 export class IntegrationController {
   /**
    * Конструктор контролера
@@ -55,7 +53,9 @@ export class IntegrationController {
    * Приймає дані кампанії з LightboxTV та передає їх до інтеграційного
    * сервісу для створення відповідних сутностей в OML.
    * 
-   * @param payload Дані для публікації (кампанія, креативи, конфігурація)
+   * Конфігурація OML отримується зі змінних оточення.
+   * 
+   * @param payload Дані для публікації (кампанія, креативи)
    * @returns Результат інтеграції з детальною інформацією
    */
   @Post('publish-campaign')
@@ -63,8 +63,7 @@ export class IntegrationController {
   async publishCampaign(@Body() payload: CampaignPublishDto): Promise<IntegrationResult> {
     return await this.integrationService.handleCampaignPublish(
       payload.campaign,
-      payload.creatives,
-      payload.config
+      payload.creatives
     );
   }
 }

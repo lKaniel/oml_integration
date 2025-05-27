@@ -12,6 +12,12 @@ import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 
+import * as dotenv from "dotenv";
+
+
+dotenv.config();
+
+
 /**
  * Функція ініціалізації та запуску додатку
  * 
@@ -21,15 +27,7 @@ import { AppModule } from './app.module';
 async function bootstrap() {
   // Створення інстансу додатку NestJS
   const app = await NestFactory.create(AppModule);
-  
-  // Додавання ValidationPipe для валідації вхідних запитів
-  app.useGlobalPipes(
-    new ValidationPipe({
-      transform: true, // Автоматична трансформація даних
-      whitelist: true, // Видалення зайвих полів
-      forbidNonWhitelisted: true, // Заборона невизначених полів
-    }),
-  );
+
   
   // Налаштування CORS для можливості отримання запитів з різних джерел
   app.enableCors();

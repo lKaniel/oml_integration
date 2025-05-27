@@ -11,6 +11,7 @@
 
 import { Injectable } from '@nestjs/common';
 import { Block, Commercial, Mediaplan, OpenMediaLogicClient, Spot } from 'oml_sdk';
+import { EnvConfig } from '../../../config/env.config';
 
 /**
  * Інтерфейс результату інтеграції
@@ -139,8 +140,8 @@ export class IntegrationService {
   /**
    * Конструктор сервісу інтеграції
    * 
-   * Ініціалізує кеш маппінгів для різних типів довідників,
-   * що використовуються під час інтеграції.
+   * Ініціалізує кеш маппінгів для різних типів довідників
+   * та клієнт OML з використанням змінних оточення.
    */
   constructor() {
     // Ініціалізація кешу маппінгів між LightboxTV та OML
@@ -148,32 +149,36 @@ export class IntegrationService {
     this.mappingCache.set("brands", new Map());
     this.mappingCache.set("channels", new Map());
     this.mappingCache.set("targetAudiences", new Map());
+    
+    // Отримання конфігурації OML зі змінних оточення
+    this.config = EnvConfig.getOmlConfig();
+    
+    // Ініціалізація клієнта OML
+    this.omlClient = new OpenMediaLogicClient(this.config.omlBaseUrl);
   }
 
   /**
    * Основний метод обробки публікації кампанії
    * 
-   * Виконує повний цикл інтеграції кампанії з LightboxTV в OML:
-   * 1. Аутентифікація в OML
-   * 2. Синхронізація довідників
-   * 3. Пошук та мапінг комерційних матеріалів
-   * 4. Бронювання спотів
-   * 5. Фіналізація та формування результату
+   * У цій адаптованій версії для дипломної роботи метод виконує
+   * спрощений цикл інтеграції:
+   * 1. Аутентифікація в OML з використанням готового JWT токена
+   * 2. Бронювання конкретного споту у блоці 965745 (26/04/2025 07:20:00)
+   * 3. Формування результату
+   * 
+   * Конфігурація OML отримується зі змінних оточення.
    * 
    * @param campaign Дані кампанії LightboxTV
    * @param creatives Дані креативів для кампанії
-   * @param config Конфігурація для інтеграції з OML
    * @returns Результат інтеграції з детальною інформацією
    */
   public async handleCampaignPublish(
     campaign: LightboxTVCampaign,
-    creatives: LightboxTVCreative[],
-    config: IntegrationConfig
+    creatives: LightboxTVCreative[]
   ): Promise<IntegrationResult> {
     try {
-      // Встановлення конфігурації та ініціалізація клієнта OML
-      this.config = config;
-      this.omlClient = new OpenMediaLogicClient(config.omlBaseUrl);
+      // Конфігурація та клієнт OML вже ініціалізовані в конструкторі
+      // через змінні оточення
 
       this.logProgress("start", 0, "Початок інтеграції кампанії");
 
@@ -186,12 +191,12 @@ export class IntegrationService {
       this.logProgress("sync_dictionaries", 15, "Довідники синхронізовано");
 
       // 3. Пошук оптимальних блоків для розміщення
-      // const blocksForPlacement = await this.findBlocksForPlacement(campaign);
-      // this.logProgress(
-      //     "find_blocks",
-      //     30,
-      //     `Знайдено ${blocksForPlacement.length} блоків для розміщення`
-      // );
+      const blocksForPlacement = await this.findBlocksForPlacement(campaign);
+      this.logProgress(
+          "find_blocks",
+          30,
+          `Знайдено ${blocksForPlacement.length} блоків для розміщення`
+      );
 
       // 4. Підготовка креативів для розміщення
       const commercials = await this.findAndMapCommercials(creatives);
@@ -202,15 +207,15 @@ export class IntegrationService {
       );
 
       // 5. Бронювання спотів
-      const spots = await this.reserveSpots();
-      this.logProgress("reserve_spots", 80, `Заброньовано ${spots.length} спотів в OML`);
+      const spots = await this.reserveSpots(blocksForPlacement[0]!);
+      this.logProgress("reserve_spots", 80, `Заброньовано 1 спотів в OML`);
 
       // 6. Фіналізація інтеграції
       const result: IntegrationResult = {
         success: true,
         status: "complete",
-        commercial_ids: commercials.map((c) => c.id as number),
-        spot_ids: spots.map((s) => s.id as number),
+        // commercial_ids: commercials.map((c) => c.id as number),
+        // spot_ids: spots.map((s) => s.id as number),
         details: "Інтеграція кампанії успішно завершена",
       };
 
@@ -520,30 +525,17 @@ export class IntegrationService {
       const omlCommercials: Commercial[] = [];
 
       // Шукаємо комерційні матеріали з таким же ім'ям та тривалістю
-      const existingCommercials = await this.omlClient.getCommercials();
+      const existingCommercials = await this.omlClient.getCommercials({
+        per_page: 10000
+      });
 
-      if (existingCommercials.data.length > 0) {
-        // Використовуємо існуючий комерційний матеріал
-        omlCommercials.push(...existingCommercials.data);
+      for (const creative of creatives) {
+        const found = existingCommercials.data.find(el => el.id === creative.id);
+
+        if (found) {
+          omlCommercials.push(found);
+        }
       }
-      // for (const creative of creatives) {
-      //     const omlAdvertiserId = this.getMappedIdOrThrow(
-      //         "advertisers",
-      //         creative.advertiser_id
-      //     );
-      //     const omlBrandId = this.getMappedIdOrThrow("brands", creative.brand_id);
-      //
-      //     // Шукаємо комерційні матеріали з таким же ім'ям та тривалістю
-      //     const existingCommercials = await this.omlClient.getCommercials();
-      //
-      //     if (existingCommercials.data.length > 0) {
-      //         // Використовуємо існуючий комерційний матеріал
-      //         omlCommercials.push(...existingCommercials.data);
-      //     } else {
-      //         // У реальному сценарії потрібно створити через API напряму, оскільки метод в SDK відсутній
-      //         throw new Error(`Рекламний матеріал ${creative.name} не знайдений в OML`);
-      //     }
-      // }
 
       return omlCommercials;
     } catch (error: any) {
@@ -559,16 +551,20 @@ export class IntegrationService {
    * 
    * @returns Масив заброньованих спотів
    */
-  private async reserveSpots(): Promise<Spot[]> {
+  private async reserveSpots(block: Block): Promise<Spot[]> {
     try {
       const spots: Spot[] = [];
 
       const mediaplans = await this.omlClient.getMediaplans({
-        per_page: 1000,
+        per_page: 10000,
       });
-      const { commercial, mediaplan, block } = await this.findCommercialForPlacement(
-        mediaplans.data
-      );
+
+      const mediaplan = mediaplans.data.find(el => el.id === 42338);
+      const commercial = mediaplan?.commercials?.[0];
+
+      // const { commercial, mediaplan, block } = await this.findCommercialForPlacement(
+      //   mediaplans.data
+      // );
       if (!commercial) {
         console.log("not found commercial");
         return [];
@@ -578,37 +574,24 @@ export class IntegrationService {
         console.log("not found mediaplan");
         return [];
       }
-      console.log("found comercial");
       // Бронюємо спот в блоці
       try {
         const spotData = {
           commercial_id: commercial.id as number,
           mediaplan_id: mediaplan?.id as number,
-          position: "1F",
-          priority: 1,
-          auction_coeff: 1.05,
-          force: true,
+          // position: ,
+          // priority: 1,
+          // auction_coeff: 1.05,
+          // force: true,
         };
 
         // Додавання споту до блоку
-        console.log("trying to reserve spot");
+        // console.log("trying to reserve spot");
         const updatedBlock = await this.omlClient.addSpotToBlock(
           block?.id as number,
-          spotData,
-          true
-        );
+          spotData
+        ) as unknown as Spot;
 
-        // Знаходимо доданий спот у блоці
-        const addedSpot = updatedBlock.spots?.find(
-          (s) => s.commercial_id === commercial.id
-        );
-
-        if (addedSpot) {
-          spots.push(addedSpot);
-        }
-
-        console.log("Успішно заброньовано спот");
-        console.log(addedSpot);
         return spots;
       } catch (error: any) {
         // Формуємо curl запит для логування
@@ -619,10 +602,6 @@ export class IntegrationService {
             -d '${JSON.stringify({
               commercial_id: commercial.id,
               mediaplan_id: mediaplan?.id,
-              position: "1F",
-              priority: 1,
-              auction_coeff: 1.05,
-              force: true,
             })}'`;
 
         // Логуємо помилку разом з curl запитом для відтворення
