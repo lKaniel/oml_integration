@@ -31,13 +31,13 @@ jobs:
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile
 
-      - name: Build
-        run: pnpm run build
+#      - name: Build
+#        run: pnpm run build
 
-      - name: Configure npm for production dependencies only
-        run: |
-          echo "save-dev=false" >> .npmrc
-          echo "only=prod" >> .npmrc
+#      - name: Configure npm for production dependencies only
+#        run: |
+#          echo "save-dev=false" >> .npmrc
+#          echo "only=prod" >> .npmrc
 
       - name: Release
         env:
